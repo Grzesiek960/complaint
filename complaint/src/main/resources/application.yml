@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/dbcomplaints
+    username: appuser
+    password: secret
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  liquibase:
+    change-log: classpath:db/migration/db.changelog-master.xml
+geo:
+  api:
+    url: http://ip-api.com/json/
