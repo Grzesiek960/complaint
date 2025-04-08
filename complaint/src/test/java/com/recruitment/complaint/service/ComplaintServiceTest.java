@@ -12,14 +12,16 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
-import java.util.Optional;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 class ComplaintServiceTest {
 
@@ -42,7 +44,6 @@ class ComplaintServiceTest {
 
     @Test
     void testCreateComplaint_whenNewComplaint_thenReturnCreatedComplaint() {
-        // Przygotowanie danych wejściowych
         CreateComplaintRequest request = new CreateComplaintRequest();
         request.setProductId("prod-123");
         request.setReporter("john@example.com");
@@ -54,14 +55,12 @@ class ComplaintServiceTest {
         complaint.setReporter("john@example.com");
         complaint.setContent("Problem z produktem");
 
-        // Brak duplikatu – zgłoszenie nowe
         when(repository.findByProductIdAndReporter("prod-123", "john@example.com"))
                 .thenReturn(Optional.empty());
         when(geoLocationService.getCountryForIp(clientIp))
                 .thenReturn("Polska");
         when(mapper.toEntity(request)).thenReturn(complaint);
 
-        // Symulujemy zapis nowej reklamacji
         Complaint savedComplaint = new Complaint();
         savedComplaint.setId(1L);
         savedComplaint.setProductId("prod-123");
@@ -80,10 +79,8 @@ class ComplaintServiceTest {
         expectedResponse.setReportCount(1);
         when(mapper.toResponse(savedComplaint)).thenReturn(expectedResponse);
 
-        // Wywołanie testowanej metody
         ComplaintResponse result = service.createComplaint(request, clientIp);
 
-        // Weryfikacja
         assertNotNull(result);
         assertEquals(1L, result.getId());
         assertEquals("Polska", result.getCountry());
@@ -91,7 +88,6 @@ class ComplaintServiceTest {
 
     @Test
     void testCreateComplaint_whenExistingComplaint_thenIncrementReportCount() {
-        // Przygotowanie danych wejściowych
         CreateComplaintRequest request = new CreateComplaintRequest();
         request.setProductId("prod-123");
         request.setReporter("john@example.com");
@@ -105,11 +101,9 @@ class ComplaintServiceTest {
         existingComplaint.setContent("Problem z produktem");
         existingComplaint.setReportCount(1);
 
-        // Zgłoszenie już istnieje
         when(repository.findByProductIdAndReporter("prod-123", "john@example.com"))
                 .thenReturn(Optional.of(existingComplaint));
 
-        // Aktualizacja zgłoszenia
         Complaint updatedComplaint = new Complaint();
         updatedComplaint.setId(1L);
         updatedComplaint.setProductId("prod-123");
@@ -126,17 +120,14 @@ class ComplaintServiceTest {
         expectedResponse.setReportCount(2);
         when(mapper.toResponse(updatedComplaint)).thenReturn(expectedResponse);
 
-        // Wywołanie metody
         ComplaintResponse result = service.createComplaint(request, clientIp);
 
-        // Weryfikacja
         assertNotNull(result);
         assertEquals(2, result.getReportCount());
     }
 
     @Test
     void testUpdateComplaintContent_whenComplaintExists_thenUpdateContent() {
-        // Przygotowanie danych wejściowych
         Long complaintId = 1L;
         UpdateComplaintRequest updateRequest = new UpdateComplaintRequest();
         updateRequest.setContent("Zaktualizowana treść reklamacji");
@@ -157,24 +148,20 @@ class ComplaintServiceTest {
         expectedResponse.setContent("Zaktualizowana treść reklamacji");
         when(mapper.toResponse(updatedComplaint)).thenReturn(expectedResponse);
 
-        // Wywołanie metody
         ComplaintResponse result = service.updateComplaintContent(complaintId, updateRequest);
 
-        // Weryfikacja
         assertNotNull(result);
         assertEquals("Zaktualizowana treść reklamacji", result.getContent());
     }
 
     @Test
     void testUpdateComplaintContent_whenComplaintNotFound_thenThrowException() {
-        // Przygotowanie danych wejściowych
         Long complaintId = 1L;
         UpdateComplaintRequest updateRequest = new UpdateComplaintRequest();
         updateRequest.setContent("Zaktualizowana treść reklamacji");
 
         when(repository.findById(complaintId)).thenReturn(Optional.empty());
 
-        // Weryfikacja – spodziewamy się wyjątku
         assertThrows(ComplaintNotFoundException.class, () -> {
             service.updateComplaintContent(complaintId, updateRequest);
         });
@@ -193,10 +180,8 @@ class ComplaintServiceTest {
         expectedResponse.setContent("Treść reklamacji");
         when(mapper.toResponse(complaint)).thenReturn(expectedResponse);
 
-        // Wywołanie metody
         ComplaintResponse result = service.getComplaint(complaintId);
 
-        // Weryfikacja
         assertNotNull(result);
         assertEquals(complaintId, result.getId());
     }
@@ -218,7 +203,9 @@ class ComplaintServiceTest {
         Complaint complaint2 = new Complaint();
         complaint2.setId(2L);
 
-        when(repository.findAll()).thenReturn(Arrays.asList(complaint1, complaint2));
+        Page<Complaint> complaintPage = new PageImpl<>(Arrays.asList(complaint1, complaint2));
+
+        when(repository.findAll(any(Pageable.class))).thenReturn(complaintPage);
         ComplaintResponse response1 = new ComplaintResponse();
         response1.setId(1L);
         ComplaintResponse response2 = new ComplaintResponse();
@@ -226,9 +213,9 @@ class ComplaintServiceTest {
         when(mapper.toResponse(complaint1)).thenReturn(response1);
         when(mapper.toResponse(complaint2)).thenReturn(response2);
 
-        List<ComplaintResponse> responses = service.getAllComplaints();
+        Page<ComplaintResponse> responses = service.getAllComplaints(Pageable.unpaged());
 
         assertNotNull(responses);
-        assertEquals(2, responses.size());
+        assertEquals(2, responses.getTotalElements());
     }
 }

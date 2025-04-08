@@ -4,23 +4,28 @@ import com.recruitment.complaint.dto.ComplaintResponse;
 import com.recruitment.complaint.dto.CreateComplaintRequest;
 import com.recruitment.complaint.dto.UpdateComplaintRequest;
 import com.recruitment.complaint.service.ComplaintService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/complaints")
 public class ComplaintController {
 
     private final ComplaintService complaintService;
-
-    public ComplaintController(ComplaintService service) {
-        this.complaintService = service;
-    }
 
     @PostMapping
     public ResponseEntity<ComplaintResponse> createComplaint(
@@ -52,8 +57,8 @@ public class ComplaintController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ComplaintResponse>> getAllComplaints() {
-        List<ComplaintResponse> list = complaintService.getAllComplaints();
-        return ResponseEntity.ok(list);
+    public ResponseEntity<Page<ComplaintResponse>> getAllComplaints(Pageable pageable) {
+        Page<ComplaintResponse> page = complaintService.getAllComplaints(pageable);
+        return ResponseEntity.ok(page);
     }
 }

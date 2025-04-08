@@ -11,7 +11,7 @@ Aplikacja umożliwia:
 - Automatyczne ustalanie kraju na podstawie adresu IP klienta.
 
 Projekt został przygotowany, wykorzystując:
-- Java 21
+- Java 17
 - Spring Boot 3.1.2
 - Maven
 - PostgreSQL jako bazę danych
@@ -22,7 +22,7 @@ Projekt został przygotowany, wykorzystując:
 
 Wymagania
 ---------
-- Java JDK 21
+- Java JDK 17
 - Maven
 - Docker (opcjonalnie, do uruchomienia aplikacji w kontenerach)
 

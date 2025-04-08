@@ -8,6 +8,8 @@ import com.recruitment.complaint.exception.ComplaintNotFoundException;
 import com.recruitment.complaint.mapper.ComplaintMapper;
 import com.recruitment.complaint.repository.ComplaintRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,8 +76,7 @@ public class ComplaintService {
         return mapper.toResponse(complaint);
     }
 
-    public List<ComplaintResponse> getAllComplaints() {
-        List<Complaint> all = repository.findAll();
-        return all.stream().map(mapper::toResponse).toList();
+    public Page<ComplaintResponse> getAllComplaints(Pageable pageable) {
+        return repository.findAll(pageable).map(mapper::toResponse);
     }
 }
